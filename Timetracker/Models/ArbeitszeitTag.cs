@@ -13,5 +13,6 @@ namespace Timetracker.Models
         public TimeSpan Ende { get; set; }
         public TimeSpan Pause { get; set; }
         public string Notiz { get; set; }
+        public TimeSpan GearbeiteteZeit => (Ende - Start - Pause);
     }
 }

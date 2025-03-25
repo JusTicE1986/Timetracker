@@ -14,6 +14,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!-- Datum -->
@@ -48,5 +49,33 @@
             <Button Content="Laden" Command="{Binding LadenCommand}" Margin="0 0 10 0"/>
             <Button Content="Speichern" Command="{Binding SpeichernCommand}" />
         </StackPanel>
+        <DataGrid Grid.Row="6"
+                  ItemsSource="{Binding WochenDaten}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  Margin="0 10 0 10"
+                  CanUserAddRows="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Datum"
+                                    Binding="{Binding Datum, StringFormat=d}"/>
+                <DataGridTextColumn Header="Start"
+                                    Binding="{Binding Start}" />
+                <DataGridTextColumn Header="Ende"
+                                    Binding="{Binding Ende}" />
+                <DataGridTextColumn Header="Pause"
+                                    Binding="{Binding Pause}" />
+                <DataGridTextColumn Header="Gearbeitet"
+                                    Binding="{Binding GearbeiteteZeit}" />
+                <DataGridTextColumn Header="Notiz"
+                                    Binding="{Binding Notiz}" />
+            </DataGrid.Columns>
+        </DataGrid>
+        <TextBlock Grid.Row="7"
+                   Text="{Binding WochenSumme}"
+                   FontWeight="Bold"
+                   FontSize="16"
+                   HorizontalAlignment="Right"
+                   Margin="0 0 0 10"
+                   TextWrapping="Wrap"/>
     </Grid>
 </UserControl>

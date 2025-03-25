@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using Timetracker.Models;
+using System.Collections.ObjectModel;
 
 namespace Timetracker.ViewModels 
 {
@@ -29,10 +30,15 @@ namespace Timetracker.ViewModels
 
         [ObservableProperty]
         private string notiz = string.Empty;
+        [ObservableProperty]
+        private ObservableCollection<ArbeitszeitTag> wochenDaten = new();
+
+        [ObservableProperty]
+        private TimeSpan wochenSumme;
 
         private readonly string dateipfad = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Arbeitszeitrechner", "daten.json");
+            "Timetracker", "daten.json");
 
         [RelayCommand]
         private void Speichern()
@@ -79,6 +85,38 @@ namespace Timetracker.ViewModels
                 Ende = heute.Ende;
                 Pause = heute.Pause;
                 Notiz = heute.Notiz;
+            }
+        }
+
+        partial void OnDatumChanged(DateTime value)
+        {
+            LadeWoche();
+        }
+
+        private void LadeWoche()
+        {
+            WochenDaten.Clear();
+            WochenSumme = TimeSpan.Zero;
+
+            if (!File.Exists(dateipfad)) return;
+
+            var json = File.ReadAllText(dateipfad);
+            var daten = JsonSerializer.Deserialize<List<ArbeitszeitTag>>(json);
+
+            if (daten is null) return;
+
+            var startDerWoche = Datum.Date.AddDays(-(int)Datum.DayOfWeek + 1); // Montag
+            var endeDerWoche = startDerWoche.Add(TimeSpan.FromDays(6));
+
+            var eintraege = daten
+                .Where(t => t.Datum >= startDerWoche && t.Datum <= endeDerWoche)
+                .OrderBy(t => t.Datum)
+                .ToList();
+
+            foreach (var tag in eintraege)
+            {
+                WochenDaten.Add(tag);
+                WochenSumme += tag.GearbeiteteZeit;
             }
         }
     }
