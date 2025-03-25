@@ -18,6 +18,7 @@ C:\Programmierung\Timetracker\Timetracker\obj\Debug\net8.0-windows\Timetracker.G
 C:\Programmierung\Timetracker\Timetracker\obj\Debug\net8.0-windows\Timetracker.AssemblyInfoInputs.cache
 C:\Programmierung\Timetracker\Timetracker\obj\Debug\net8.0-windows\Timetracker.AssemblyInfo.cs
 C:\Programmierung\Timetracker\Timetracker\obj\Debug\net8.0-windows\Timetracker.csproj.CoreCompileInputs.cache
+C:\Programmierung\Timetracker\Timetracker\obj\Debug\net8.0-windows\Timetracker.sourcelink.json
 C:\Programmierung\Timetracker\Timetracker\obj\Debug\net8.0-windows\Timetrac.BF859CEA.Up2Date
 C:\Programmierung\Timetracker\Timetracker\obj\Debug\net8.0-windows\Timetracker.dll
 C:\Programmierung\Timetracker\Timetracker\obj\Debug\net8.0-windows\refint\Timetracker.dll
