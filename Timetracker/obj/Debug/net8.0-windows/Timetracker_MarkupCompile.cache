@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP
 C:\Programmierung\Timetracker\Timetracker\App.xaml
-2-1631076219
+41817801736
 
 7-300357014
 199-1916604727
-MainWindow.xaml;Views\MainView.xaml;
+MainWindow.xaml;Themes\DarkTheme.xaml;Themes\LightTheme.xaml;Views\MainView.xaml;
 
 False
 
