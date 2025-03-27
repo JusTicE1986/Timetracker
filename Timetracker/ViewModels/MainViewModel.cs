@@ -12,8 +12,10 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 using Timetracker.Models;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using Timetracker.Helper;
+using System.Web;
 
-namespace Timetracker.ViewModels 
+namespace Timetracker.ViewModels
 {
     public partial class MainViewModel : ObservableObject
     {
@@ -42,6 +44,28 @@ namespace Timetracker.ViewModels
 
         [ObservableProperty]
         private ArbeitszeitTag? ausgewaehlterTag;
+
+        [ObservableProperty]
+        private int aktuelleKalenderwoche;
+
+        [ObservableProperty]
+        private int aktuellesJahr;
+
+        [ObservableProperty]
+        private ObservableCollection<WochenTagEintrag> wochenTage = new();
+
+        public string KalenderwochenAnzeige => $"Kalenderwoche {AktuelleKalenderwoche} / {AktuellesJahr}";
+
+        partial void OnAktuelleKalenderwocheChanged(int value)
+        {
+            OnPropertyChanged(nameof(KalenderwochenAnzeige));
+        }
+
+        partial void OnAktuellesJahrChanged(int value)
+        {
+            OnPropertyChanged(nameof(KalenderwochenAnzeige));
+        }
+
 
         private readonly string dateipfad = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -107,6 +131,24 @@ namespace Timetracker.ViewModels
             }
         }
 
+        [RelayCommand]
+        private void WocheVor()
+        {
+            var start = KulturHelper.GetStartDerKalenderwoche(aktuellesJahr, aktuelleKalenderwoche).AddDays(7);
+            aktuelleKalenderwoche = KulturHelper.GetKalenderwoche(start);
+            aktuellesJahr = start.Year;
+            LadeWoche();
+        }
+
+        [RelayCommand]
+        private void WocheZurueck()
+        {
+            var start = KulturHelper.GetStartDerKalenderwoche(aktuellesJahr, aktuelleKalenderwoche).AddDays(-7);
+            aktuelleKalenderwoche = KulturHelper.GetKalenderwoche(start);
+            aktuellesJahr = start.Year;
+            LadeWoche();
+        }
+
         private void LadeWoche()
         {
             WochenDaten.Clear();
@@ -119,19 +161,40 @@ namespace Timetracker.ViewModels
 
             if (daten is null) return;
 
-            var startDerWoche = Datum.Date.AddDays(-(int)Datum.DayOfWeek + 1); // Montag
-            var endeDerWoche = startDerWoche.Add(TimeSpan.FromDays(6));
+            var startDerWoche = KulturHelper.GetStartDerKalenderwoche(aktuellesJahr, aktuelleKalenderwoche); // Montag
+                                                                                                             //var endeDerWoche = startDerWoche.Add(TimeSpan.FromDays(6));
 
-            var eintraege = daten
-                .Where(t => t.Datum >= startDerWoche && t.Datum <= endeDerWoche)
-                .OrderBy(t => t.Datum)
-                .ToList();
+            //var eintraege = daten
+            //    .Where(t => t.Datum >= startDerWoche && t.Datum <= endeDerWoche)
+            //    .OrderBy(t => t.Datum)
+            //    .ToList();
 
-            foreach (var tag in eintraege)
+            //foreach (var tag in eintraege)
+            //{
+            //    WochenDaten.Add(tag);
+            //    WochenSumme += tag.GearbeiteteZeit;
+            //
+            for (int i = 0; i < 7; i++)
             {
-                WochenDaten.Add(tag);
-                WochenSumme += tag.GearbeiteteZeit;
+                var datum = startDerWoche.AddDays(i);
+                var eintrag = daten.FirstOrDefault(t => t.Datum.Date == datum.Date);
+
+                if (eintrag == null)
+                {
+                    eintrag = new ArbeitszeitTag
+                    {
+                        Datum = datum,
+                        Start = TimeSpan.Zero,
+                        Ende = TimeSpan.Zero,
+                        Pause = TimeSpan.Zero,
+                        Notiz = ""
+                    };
+                }
+
+                WochenDaten.Add(eintrag);
+                wochenSumme += eintrag.GearbeiteteZeit;
             }
+
         }
 
         partial void OnDatumChanged(DateTime value)
@@ -142,6 +205,7 @@ namespace Timetracker.ViewModels
         partial void OnAusgewaehlterTagChanged(ArbeitszeitTag? value)
         {
             if (value is null) return;
+            Debug.WriteLine($"Tag ausgewählt: {value.Datum:dd.MM.yyyy}");
             Datum = value.Datum;
             Start = value.Start;
             Ende = value.Ende;
@@ -163,6 +227,9 @@ namespace Timetracker.ViewModels
         }
         public MainViewModel()
         {
+            var heute = DateTime.Today;
+            aktuelleKalenderwoche = KulturHelper.GetKalenderwoche(heute);
+            aktuellesJahr = heute.Year;
             LadeWoche();
             LadeAlleTage();
         }

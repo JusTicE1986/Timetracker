@@ -4,11 +4,13 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Timetracker.Views"
+             xmlns:conv="clr-namespace:Timetracker.Converter"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800"
              FontFamily="Segoe UI Variable"
              FontSize="14">
     <UserControl.Resources>
+        <conv:BooltToIconConverter x:Key="BoolToIconConverter"/>
         <DropShadowEffect x:Key="ShadowEffect"
                           Color="#000000"
                           BlurRadius="8"
@@ -53,18 +55,7 @@
             <Setter Property="BorderThickness" Value="0,0,0,1"/>
             <Setter Property="Padding" Value="8"/>
         </Style>
-        <Style TargetType="DataGridRow">
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="ToolTip" Value="Klicken zum Anzeigen / Bearbeiten"/>
-            <Setter Property="Margin" Value="0"/>
-            <Setter Property="Padding" Value="4"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#dceeff"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
+
         <Style TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
             <Setter Property="CornerRadius" Value="8"/>
@@ -117,7 +108,7 @@
                     </StackPanel>
                 </StackPanel>
             </Border>
-            <Border>
+            <!--<Border>
                 <StackPanel>
                     <TextBlock Text="Gespeicherte Tage"
                            FontSize="18"
@@ -135,43 +126,82 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
                 </StackPanel>
-            </Border>
+            </Border>-->
             <Border>
                 <StackPanel>
-                        <TextBlock Text="Wochenübersicht"
+                    <TextBlock Text="Wochenübersicht"
                            FontSize="18"
                            FontWeight="SemiBold"
                            Margin="0 0 0 10"/>
-                        <DataGrid Grid.Row="7"
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 0 0 10">
+                        <Button Content="◀" Command="{Binding WocheZurueckCommand}" Width="30"/>
+
+                        <TextBlock FontSize="16"
+               FontWeight="SemiBold"
+               Margin="10,0"
+               VerticalAlignment="Center"
+                                   Text="{Binding KalenderwochenAnzeige}"/>
+
+                        <Button Content="▶" Command="{Binding WocheVorCommand}" Width="30"/>
+                    </StackPanel>
+                    <DataGrid Grid.Row="7"
                               ItemsSource="{Binding WochenDaten}"
+                                  SelectedItem="{Binding AusgewaehlterTag, Mode=TwoWay}"
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
                               Margin="0 10 0 10"
-                              CanUserAddRows="False">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Datum"
-                                        Binding="{Binding Datum, StringFormat=d}"/>
-                                <DataGridTextColumn Header="Start"
-                                        Binding="{Binding Start}" />
-                                <DataGridTextColumn Header="Ende"
-                                        Binding="{Binding Ende}" />
-                                <DataGridTextColumn Header="Pause"
-                                        Binding="{Binding Pause}" />
-                                <DataGridTextColumn Header="Gearbeitet"
+                              CanUserAddRows="False"
+                                  SelectionMode="Single"
+                                  SelectionUnit="FullRow">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Cursor" Value="Hand"/>
+                                <Setter Property="ToolTip" Value="Klicken zum Anzeigen / Bearbeiten"/>
+                                <Setter Property="Margin" Value="0"/>
+                                <Setter Property="Padding" Value="4"/>
+                                <Setter Property="SnapsToDevicePixels" Value="True"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#dceeff"/>
+                                    </Trigger>
+                                    <DataTrigger Binding="{Binding IstFeiertag}" Value="True">
+                                        <Setter Property="Background" Value="#ffe4e1"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IstWochenende}" Value="True">
+                                        <Setter Property="Background" Value="#f0f0f0"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Datum"
+                                        Binding="{Binding Datum, StringFormat='dd.MM.yyyy'}"/>
+                            <DataGridTextColumn Header="Tag"
+                                        Binding="{Binding Wochentag}" />
+                            <DataGridTemplateColumn Header="✓">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock FontSize="16" TextAlignment="Center" HorizontalAlignment="Center"
+                       Text="{Binding IstErfasst, Converter={StaticResource BoolToIconConverter}}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTextColumn Header="Gearbeitet"
                                         Binding="{Binding GearbeiteteZeit}" />
-                                <DataGridTextColumn Header="Notiz"
-                                        Binding="{Binding Notiz}" />
-                            </DataGrid.Columns>
-                        </DataGrid>
-                        <TextBlock
+                            <DataGridTextColumn Header="Besonderheit"
+                                        Binding="{Binding Besonderheit}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <TextBlock
                             Text="{Binding WochenSumme}"
                             FontWeight="Bold"
                             FontSize="16"
                             HorizontalAlignment="Right"
                             Margin="0 0 0 10"
                             TextWrapping="Wrap"/>
-                    </StackPanel>
-                </Border>
+                </StackPanel>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
