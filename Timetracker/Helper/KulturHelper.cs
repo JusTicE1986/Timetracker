@@ -32,14 +32,14 @@ namespace Timetracker.Helper
         {
             if (datum.DayOfWeek == DayOfWeek.Saturday || datum.DayOfWeek == DayOfWeek.Sunday) return "Wochenende";
 
-            // Dummy-Feiertage:
-            if (datum.Month == 12 && datum.Day == 25)
-                return "Weihnachten";
-            if (datum.Month == 1 && datum.Day == 1)
-                return "Neujahr";
+            if (FeiertagsHelper.GetFeiertage(datum.Year).TryGetValue(datum.Date, out var name))
+                return name;
+
+            if (datum.DayOfWeek == DayOfWeek.Saturday || datum.DayOfWeek == DayOfWeek.Sunday)
+                return "Wochenende";
 
             return null;
-        }
 
+        }
     }
 }

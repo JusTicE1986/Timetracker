@@ -14,6 +14,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Timetracker.Helper;
 using System.Web;
+using System.Globalization;
 
 namespace Timetracker.ViewModels
 {
@@ -23,10 +24,10 @@ namespace Timetracker.ViewModels
         private DateTime datum = DateTime.Today;
 
         [ObservableProperty]
-        private TimeSpan start = new(8, 0, 0);
+        private TimeSpan start = new(6, 0, 0);
 
         [ObservableProperty]
-        private TimeSpan ende = new(16, 30, 0);
+        private TimeSpan ende = new(14, 6, 0);
 
         [ObservableProperty]
         private TimeSpan pause = new(0, 30, 0);
@@ -54,18 +55,48 @@ namespace Timetracker.ViewModels
         [ObservableProperty]
         private ObservableCollection<WochenTagEintrag> wochenTage = new();
 
+        [ObservableProperty]
+        private MonatsInfo aktuelleMonatsInfo = new();
+
         public string KalenderwochenAnzeige => $"Kalenderwoche {AktuelleKalenderwoche} / {AktuellesJahr}";
 
         partial void OnAktuelleKalenderwocheChanged(int value)
         {
+
             OnPropertyChanged(nameof(KalenderwochenAnzeige));
         }
 
         partial void OnAktuellesJahrChanged(int value)
         {
+
             OnPropertyChanged(nameof(KalenderwochenAnzeige));
         }
 
+        partial void OnDatumChanged(DateTime value)
+        {
+            LadeWoche();
+        }
+
+        partial void OnAusgewaehlterTagChanged(ArbeitszeitTag? value)
+        {
+            if (value is null) return;
+            Debug.WriteLine($"Tag ausgewählt: {value.Datum:dd.MM.yyyy}");
+            Datum = value.Datum;
+            Start = value.Start;
+            Ende = value.Ende;
+            Pause = value.Pause;
+            Notiz = value.Notiz;
+        }
+
+        partial void OnStartChanged(TimeSpan value)
+        {
+            BerechnePause();
+        }
+
+        partial void OnEndeChanged(TimeSpan value)
+        {
+            BerechnePause();
+        }
 
         private readonly string dateipfad = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -111,6 +142,9 @@ namespace Timetracker.ViewModels
             }
 
             File.WriteAllText(dateipfad, JsonSerializer.Serialize(daten, new JsonSerializerOptions { WriteIndented = true }));
+            LadeWoche();
+            BerechneMonatsInfo();
+
         }
 
         [RelayCommand]
@@ -134,19 +168,27 @@ namespace Timetracker.ViewModels
         [RelayCommand]
         private void WocheVor()
         {
-            var start = KulturHelper.GetStartDerKalenderwoche(aktuellesJahr, aktuelleKalenderwoche).AddDays(7);
-            aktuelleKalenderwoche = KulturHelper.GetKalenderwoche(start);
-            aktuellesJahr = start.Year;
+            var start = KulturHelper.GetStartDerKalenderwoche(AktuellesJahr, AktuelleKalenderwoche).AddDays(7);
+            AktuelleKalenderwoche = KulturHelper.GetKalenderwoche(start);
+            AktuellesJahr = start.Year;
             LadeWoche();
         }
 
         [RelayCommand]
         private void WocheZurueck()
         {
-            var start = KulturHelper.GetStartDerKalenderwoche(aktuellesJahr, aktuelleKalenderwoche).AddDays(-7);
-            aktuelleKalenderwoche = KulturHelper.GetKalenderwoche(start);
-            aktuellesJahr = start.Year;
+            var start = KulturHelper.GetStartDerKalenderwoche(AktuellesJahr, AktuelleKalenderwoche).AddDays(-7);
+            AktuelleKalenderwoche = KulturHelper.GetKalenderwoche(start);
+            AktuellesJahr = start.Year;
             LadeWoche();
+        }
+
+        [RelayCommand]
+        private void Zuruecksetzen()
+        {
+            Start = new TimeSpan(6, 0, 0);
+            Ende = new TimeSpan(14, 6, 0);
+            Notiz = string.Empty;
         }
 
         private void LadeWoche()
@@ -161,19 +203,8 @@ namespace Timetracker.ViewModels
 
             if (daten is null) return;
 
-            var startDerWoche = KulturHelper.GetStartDerKalenderwoche(aktuellesJahr, aktuelleKalenderwoche); // Montag
-                                                                                                             //var endeDerWoche = startDerWoche.Add(TimeSpan.FromDays(6));
+            var startDerWoche = KulturHelper.GetStartDerKalenderwoche(AktuellesJahr, AktuelleKalenderwoche); // Montag
 
-            //var eintraege = daten
-            //    .Where(t => t.Datum >= startDerWoche && t.Datum <= endeDerWoche)
-            //    .OrderBy(t => t.Datum)
-            //    .ToList();
-
-            //foreach (var tag in eintraege)
-            //{
-            //    WochenDaten.Add(tag);
-            //    WochenSumme += tag.GearbeiteteZeit;
-            //
             for (int i = 0; i < 7; i++)
             {
                 var datum = startDerWoche.AddDays(i);
@@ -192,39 +223,123 @@ namespace Timetracker.ViewModels
                 }
 
                 WochenDaten.Add(eintrag);
-                wochenSumme += eintrag.GearbeiteteZeit;
+                WochenSumme += eintrag.GearbeiteteZeit;
             }
 
         }
 
-        partial void OnDatumChanged(DateTime value)
+        private List<ArbeitszeitTag> LadeAlleTage()
         {
-            LadeWoche();
-        }
-
-        partial void OnAusgewaehlterTagChanged(ArbeitszeitTag? value)
-        {
-            if (value is null) return;
-            Debug.WriteLine($"Tag ausgewählt: {value.Datum:dd.MM.yyyy}");
-            Datum = value.Datum;
-            Start = value.Start;
-            Ende = value.Ende;
-            Pause = value.Pause;
-            Notiz = value.Notiz;
-        }
-        public void LadeAlleTage()
-        {
-            if (!File.Exists(dateipfad)) return;
+            if (!File.Exists(dateipfad))
+                return new List<ArbeitszeitTag>();
 
             var json = File.ReadAllText(dateipfad);
             var daten = JsonSerializer.Deserialize<List<ArbeitszeitTag>>(json) ?? new();
 
-            gespeicherteTage.Clear();
-            foreach (var tag in daten.OrderBy(t => t.Datum))
-            {
-                gespeicherteTage.Add(tag);
-            }
+            return daten.OrderBy(t => t.Datum).ToList();
         }
+
+
+        public void BerechnePause()
+        {
+            var arbeitszeitBrutto = Ende - Start;
+
+            if (arbeitszeitBrutto <= TimeSpan.FromHours(6))
+            {
+                Pause = TimeSpan.Zero;
+            }
+            else if (arbeitszeitBrutto > TimeSpan.FromHours(6) && arbeitszeitBrutto <= TimeSpan.FromHours(6.5))
+            {
+                Pause = arbeitszeitBrutto - TimeSpan.FromHours(6);
+            }
+            else if (arbeitszeitBrutto > TimeSpan.FromHours(6.5) && arbeitszeitBrutto <= TimeSpan.FromHours(9.25))
+            {
+                Pause = TimeSpan.FromMinutes(30);
+            }
+            else if (arbeitszeitBrutto > TimeSpan.FromHours(9.25) && arbeitszeitBrutto <= TimeSpan.FromHours(9.5))
+            {
+                Pause = arbeitszeitBrutto - TimeSpan.FromHours(9);
+            }
+            else
+            {
+                Pause = TimeSpan.FromMinutes(45);
+            }
+
+        }
+
+        public void BerechneMonatsInfo()
+        {
+            var daten = LadeAlleTage();
+            var monat = Datum.Month;
+            var jahr = Datum.Year;
+
+            var tageImMonat = daten
+                .Where(t => t.Datum.Month == monat && t.Datum.Year == jahr)
+                .ToList();
+
+            var gearbeiteteZeit = tageImMonat.Aggregate(TimeSpan.Zero, (summe, tag) => summe + tag.BerechneteGearbeiteteZeit);
+
+            var sollzeit = BerechneSollzeit(monat, jahr);
+
+            AktuelleMonatsInfo = new MonatsInfo
+            {
+                MonatJahr = $"{CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(monat)} {jahr}",
+                MonatlichGearbeitet = gearbeiteteZeit,
+                MonatlicheSollzeit = sollzeit,
+                KumuliertesGleitzeitkonto = BerechneGleitzeitBis(jahr, monat)
+            };
+        }
+
+        private TimeSpan BerechneSollzeit(int monat, int jahr)
+        {
+            var sollzeitProTag = new TimeSpan(7, 36, 0);
+            var anzahlTage = DateTime.DaysInMonth(jahr, monat);
+            var summe = TimeSpan.Zero;
+
+            for (int tag = 1; tag <= anzahlTage; tag++)
+            {
+                var datum = new DateTime(jahr, monat, tag);
+
+                if (datum.DayOfWeek == DayOfWeek.Saturday || datum.DayOfWeek == DayOfWeek.Sunday)
+                    continue;
+
+                summe += sollzeitProTag;
+            }
+            return summe;
+        }
+
+        private TimeSpan BerechneGleitzeitBis(int jahr, int monat)
+        {
+            if (!File.Exists(dateipfad))
+                return TimeSpan.Zero;
+
+            var json = File.ReadAllText(dateipfad);
+            var daten = JsonSerializer.Deserialize<List<ArbeitszeitTag>>(json) ?? new();
+
+            var start = new DateTime(jahr, 1, 1);
+            var ende = new DateTime(jahr, monat, DateTime.DaysInMonth(jahr, monat));
+
+            var betroffeneTage = daten
+                .Where(t => t.Datum.Date >= start && t.Datum.Date <= ende)
+                .OrderBy(t => t.Datum)
+                .ToList();
+
+            TimeSpan soll = TimeSpan.Zero;
+            TimeSpan ist = TimeSpan.Zero;
+
+            foreach (var tag in betroffeneTage)
+            {
+                if (tag.IstWochenende) continue;
+
+                soll += new TimeSpan(7, 36, 0);
+                ist += tag.BerechneteGearbeiteteZeit;
+
+            }
+
+            return ist - soll;
+        }
+
+
         public MainViewModel()
         {
             var heute = DateTime.Today;

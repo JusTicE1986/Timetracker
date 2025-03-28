@@ -26,5 +26,20 @@ namespace Timetracker.Views
             InitializeComponent();
             
         }
+        private void TextBox_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e) 
+        {
+            if(sender is TextBox tb)
+            {
+                tb.SelectAll();
+            }
+        }
+        private void TextBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if(sender is TextBox tb && !tb.IsKeyboardFocusWithin)
+            {
+                e.Handled = true;
+                tb.Focus();
+            }
+        }
     }
 }
