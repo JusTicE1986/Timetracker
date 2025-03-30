@@ -70,6 +70,9 @@ namespace Timetracker.ViewModels
         [ObservableProperty]
         private string themeButtonText = "🌙 Dark Mode";
 
+        [ObservableProperty]
+        private bool isZeitraumPopupOpen;
+
         public IEnumerable<Arbeitszeitmodell> Arbeitszeitmodelle => Enum.GetValues(typeof(Arbeitszeitmodell)).Cast<Arbeitszeitmodell>();
 
         private Benutzereinstellungen einstellugnen;

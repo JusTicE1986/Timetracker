@@ -25,6 +25,7 @@ namespace Timetracker
         {
             InitializeComponent();
             var viewModel = new MainViewModel();
+            DataContext = viewModel;
             MainViewControl.DataContext = viewModel;
 
             var screenWidth = SystemParameters.PrimaryScreenWidth;
