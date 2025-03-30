@@ -36,6 +36,7 @@ namespace Timetracker
             ThemeManager.SetTheme("LightTheme"); // oder "LightTheme"
 
         }
+
         private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)
         {
             if (isDarkTheme)
@@ -51,6 +52,7 @@ namespace Timetracker
 
             isDarkTheme = !isDarkTheme;
         }
+
 
     }
 }

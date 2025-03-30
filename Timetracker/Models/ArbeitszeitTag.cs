@@ -64,5 +64,21 @@ namespace Timetracker.Models
         public bool IstWochenende => Datum.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
         public bool IstFeiertag => Besonderheit != null && Besonderheit != "Wochenende";
         public bool IstErfasst => Start > TimeSpan.Zero || Ende > TimeSpan.Zero || !string.IsNullOrWhiteSpace(Notiz);
+        public bool IstFehlerhaft => Start <= TimeSpan.Zero || Ende <= TimeSpan.Zero || Ende <= Start;
+
+        public string? FehlerHinweis
+        {
+            get
+            {
+                if (Start <= TimeSpan.Zero)
+                    return "Fehlende Startzeit";
+                if (Ende <= TimeSpan.Zero)
+                    return "Fehlende Endzeit";
+                if (Ende <= Start)
+                    return "Ende liegt vor oder gleich Startzeit";
+                return null;
+            }
+        }
+
     }
 }

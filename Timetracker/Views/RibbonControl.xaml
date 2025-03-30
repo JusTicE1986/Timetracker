@@ -1,0 +1,34 @@
+﻿<UserControl x:Class="Timetracker.Views.RibbonControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Timetracker.Views"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Border Background="#f3f3f3" BorderBrush="#ddd" BorderThickness="0 0 0.5 0" Padding="8">
+        <DockPanel>
+            <!-- Linke Export-Gruppe -->
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" Margin="0,0,20,0">
+                <TextBlock Text="📄" FontSize="16" VerticalAlignment="Center" Margin="0 0 4 0"/>
+                <Button Content="Woche" Command="{Binding ExportiereWocheCommand}" Style="{StaticResource RibbonButtonStyle}"/>
+                <Button Content="Monat" Command="{Binding ExportiereMonatCommand}" Style="{StaticResource RibbonButtonStyle}"/>
+                <Button Content="Bereich" Command="{Binding ExportiereZeitraumCommand}" Style="{StaticResource RibbonButtonStyle}"/>
+            </StackPanel>
+
+            <!-- Mittlere Datumsauswahl -->
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" Margin="0,0,20,0">
+                <TextBlock Text="📅" FontSize="16" VerticalAlignment="Center" Margin="0 0 4 0"/>
+                <DatePicker SelectedDate="{Binding Startdatum}" Width="120" Margin="0 0 5 0"/>
+                <DatePicker SelectedDate="{Binding Enddatum}" Width="120"/>
+            </StackPanel>
+
+            <!-- Rechte Theme-Umschaltung -->
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                <ToggleButton Content="{Binding ThemeButtonText}"
+                              Command="{Binding ToggleThemeCommand}"
+                              IsChecked="{Binding IsDarkTheme}" Width="130" />
+            </StackPanel>
+        </DockPanel>
+    </Border>
+</UserControl>

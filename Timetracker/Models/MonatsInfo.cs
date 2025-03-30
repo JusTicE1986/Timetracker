@@ -12,7 +12,7 @@ namespace Timetracker.Models
         public TimeSpan MonatlicheSollzeit { get; set; }
         public TimeSpan MonatlichGearbeitet { get; set; }
 
-        public TimeSpan MonatlicheAbweichung => MonatlichGearbeitet - MonatlicheSollzeit;
+        public TimeSpan MonatlicheAbweichung { get; set; }
 
         public TimeSpan KumuliertesGleitzeitkonto { get; set; }
     }

@@ -1,20 +1,17 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using Timetracker.Models;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
-using Timetracker.Helper;
-using System.Web;
 using System.Globalization;
+using System.IO;
+using System.Reflection;
+using System.Text.Json;
+using System.Windows;
+using Timetracker.Helper;
+using Timetracker.Models;
+using Timetracker.Services;
+using static Timetracker.App;
 
 namespace Timetracker.ViewModels
 {
@@ -58,6 +55,25 @@ namespace Timetracker.ViewModels
         [ObservableProperty]
         private MonatsInfo aktuelleMonatsInfo = new();
 
+        [ObservableProperty]
+        private Arbeitszeitmodell ausgewaehltesModell;
+
+        [ObservableProperty]
+        private DateTime startdatum = DateTime.Today.AddDays(-7);
+
+        [ObservableProperty]
+        private DateTime enddatum = DateTime.Today;
+
+        [ObservableProperty]
+        private bool isDarkTheme;
+
+        [ObservableProperty]
+        private string themeButtonText = "🌙 Dark Mode";
+
+        public IEnumerable<Arbeitszeitmodell> Arbeitszeitmodelle => Enum.GetValues(typeof(Arbeitszeitmodell)).Cast<Arbeitszeitmodell>();
+
+        private Benutzereinstellungen einstellugnen;
+
         public string KalenderwochenAnzeige => $"Kalenderwoche {AktuelleKalenderwoche} / {AktuellesJahr}";
 
         partial void OnAktuelleKalenderwocheChanged(int value)
@@ -75,6 +91,7 @@ namespace Timetracker.ViewModels
         partial void OnDatumChanged(DateTime value)
         {
             LadeWoche();
+            BerechneMonatsInfo();
         }
 
         partial void OnAusgewaehlterTagChanged(ArbeitszeitTag? value)
@@ -96,6 +113,13 @@ namespace Timetracker.ViewModels
         partial void OnEndeChanged(TimeSpan value)
         {
             BerechnePause();
+        }
+
+        partial void OnAusgewaehltesModellChanged(Arbeitszeitmodell value)
+        {
+            einstellugnen.Arbeitszeitmodell = value;
+            EinstellungsService.Speichern(einstellugnen);
+            BerechneMonatsInfo();
         }
 
         private readonly string dateipfad = Path.Combine(
@@ -191,6 +215,79 @@ namespace Timetracker.ViewModels
             Notiz = string.Empty;
         }
 
+        [RelayCommand]
+        private void ExportiereWoche()
+        { 
+            if (WochenDaten is null || WochenDaten.Count == 0) return;
+            PdfExportService.ExportiereWoche(WochenDaten, WochenSumme);
+        }
+
+        [RelayCommand]
+        private void ExportiereMonat()
+        {
+            var monat = Datum.Month;
+            var jahr = Datum.Year;
+
+            // 1. Lade alle gespeicherten Tage aus der Datei
+            var alleTage = LadeAlleTage();
+
+            // 2. Filter auf die Tage des gewünschten Monats (nicht zwingend nötig im Service, aber nice to check)
+            var tageDesMonats = alleTage
+                .Where(t => t.Datum.Month == monat && t.Datum.Year == jahr)
+                .ToList();
+
+            if (tageDesMonats.Count == 0)
+            {
+                MessageBox.Show("Keine erfassten Tage im ausgewählten Monat.", "Hinweis",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            // 3. Übergabe an den PDF-Export
+            PdfExportService.ExportiereMonat(tageDesMonats, monat, jahr);
+        }
+
+        [RelayCommand]
+        private void ExportiereZeitraum()
+        {
+            if (Startdatum > Enddatum)
+            {
+                MessageBox.Show("Das Startdatum darf nicht nach dem Enddatum liegen.", "Ungültiger Datumsbereich", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var alleTage = LadeAlleTage();
+            var gefiltert = alleTage
+                .Where(t => t.Datum.Date >= Startdatum.Date && t.Datum.Date <= Enddatum.Date)
+                .ToList();
+
+            if(gefiltert.Count == 0)
+            {
+                MessageBox.Show("Für den gewählten Zeitraum wurden keine Einträge gefunden.", "Keine Daten", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            PdfExportService.ExportiereZeitraum(gefiltert, Startdatum, Enddatum);
+
+
+        }
+
+        [RelayCommand]
+        private void ToggleTheme()
+        {
+            if (isDarkTheme)
+            {
+                ThemeManager.SetTheme("LightTheme");
+                ThemeButtonText = "🌙 Dark Mode";
+            }
+            {
+                ThemeManager.SetTheme("DarkTheme");
+                ThemeButtonText = "☀️ Light Mode";
+            }
+
+            IsDarkTheme = !IsDarkTheme;
+        }
+
         private void LadeWoche()
         {
             WochenDaten.Clear();
@@ -239,7 +336,6 @@ namespace Timetracker.ViewModels
             return daten.OrderBy(t => t.Datum).ToList();
         }
 
-
         public void BerechnePause()
         {
             var arbeitszeitBrutto = Ende - Start;
@@ -267,32 +363,55 @@ namespace Timetracker.ViewModels
 
         }
 
-        public void BerechneMonatsInfo()
+        private void BerechneMonatsInfo()
         {
-            var daten = LadeAlleTage();
+            Debug.WriteLine("[MONATSINFO] Berechnung wurde gestartet");
+
             var monat = Datum.Month;
             var jahr = Datum.Year;
+            var sollzeitProTag = new TimeSpan(7, 36, 0);
 
+            var daten = LadeAlleTage(); // oder direkt auf gespeicherte Collection zugreifen
             var tageImMonat = daten
                 .Where(t => t.Datum.Month == monat && t.Datum.Year == jahr)
                 .ToList();
 
-            var gearbeiteteZeit = tageImMonat.Aggregate(TimeSpan.Zero, (summe, tag) => summe + tag.BerechneteGearbeiteteZeit);
+            // Gearbeitete Zeit summieren
+            var gearbeiteteZeit = tageImMonat
+                .Select(t => t.BerechneteGearbeiteteZeit)
+                .Aggregate(TimeSpan.Zero, (summe, zeit) => summe + zeit);
 
-            var sollzeit = BerechneSollzeit(monat, jahr);
+            // Sollzeit berechnen (nur Mo–Fr, Feiertage werden NICHT ausgeschlossen!)
+            var anzahlSolltage = Enumerable.Range(1, DateTime.DaysInMonth(jahr, monat))
+                .Select(day => new DateTime(jahr, monat, day))
+                .Count(d => d.DayOfWeek != DayOfWeek.Saturday && d.DayOfWeek != DayOfWeek.Sunday);
+
+            var sollzeit = TimeSpan.FromTicks(sollzeitProTag.Ticks * anzahlSolltage);
+
+            // Monatsabweichung
+            var abweichung = gearbeiteteZeit - sollzeit;
+
+            // Gleitzeitkonto (hier weiterhin separat berechnet)
+            var gleitzeit = BerechneGleitzeitBis(jahr, monat);
+
+            Debug.WriteLine($"[MONATSINFO] Gearbeitet: {gearbeiteteZeit}");
+            Debug.WriteLine($"[MONATSINFO] Sollzeit:   {sollzeit}");
+            Debug.WriteLine($"[MONATSINFO] Abweichung: {abweichung}");
+            Debug.WriteLine($"[MONATSINFO] Gleitzeit:  {gleitzeit}");
 
             AktuelleMonatsInfo = new MonatsInfo
             {
                 MonatJahr = $"{CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(monat)} {jahr}",
                 MonatlichGearbeitet = gearbeiteteZeit,
                 MonatlicheSollzeit = sollzeit,
-                KumuliertesGleitzeitkonto = BerechneGleitzeitBis(jahr, monat)
+                MonatlicheAbweichung = abweichung,
+                KumuliertesGleitzeitkonto = abweichung
             };
         }
 
         private TimeSpan BerechneSollzeit(int monat, int jahr)
         {
-            var sollzeitProTag = new TimeSpan(7, 36, 0);
+            var sollzeitProTag = HoleTagesSollzeit();
             var anzahlTage = DateTime.DaysInMonth(jahr, monat);
             var summe = TimeSpan.Zero;
 
@@ -300,12 +419,26 @@ namespace Timetracker.ViewModels
             {
                 var datum = new DateTime(jahr, monat, tag);
 
+                // Nur Samstag und Sonntag ausschließen
                 if (datum.DayOfWeek == DayOfWeek.Saturday || datum.DayOfWeek == DayOfWeek.Sunday)
                     continue;
 
+                // Feiertage NICHT ausschließen → zählen mit
                 summe += sollzeitProTag;
             }
+
             return summe;
+        }
+
+        private TimeSpan HoleTagesSollzeit()
+        {
+            return AusgewaehltesModell switch
+            {
+                Arbeitszeitmodell.Stunden35 => new TimeSpan(7, 0, 0),
+                Arbeitszeitmodell.Stunden38 => new TimeSpan(7, 36, 0),
+                Arbeitszeitmodell.Stunden40 => new TimeSpan(8, 0, 0),
+                _ => new TimeSpan(7, 36, 0)
+            };
         }
 
         private TimeSpan BerechneGleitzeitBis(int jahr, int monat)
@@ -339,14 +472,26 @@ namespace Timetracker.ViewModels
             return ist - soll;
         }
 
+        public static class EnumHelper
+        {
+            public static string GetDescription(Enum value)
+            {
+                var field = value.GetType().GetField(value.ToString());
+                var attr = field?.GetCustomAttribute<DescriptionAttribute>();
+                return attr?.Description ?? value.ToString();
+            }
+        }
 
         public MainViewModel()
         {
             var heute = DateTime.Today;
             aktuelleKalenderwoche = KulturHelper.GetKalenderwoche(heute);
             aktuellesJahr = heute.Year;
+            einstellugnen = EinstellungsService.Laden();
+            AusgewaehltesModell = einstellugnen.Arbeitszeitmodell;
             LadeWoche();
             LadeAlleTage();
+            BerechneMonatsInfo();
         }
 
 

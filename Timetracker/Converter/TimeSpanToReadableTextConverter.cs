@@ -14,10 +14,8 @@ namespace Timetracker.Converter
         {
             if(value is TimeSpan ts)
             {
-                int gesamtMinuten = (int)ts.TotalMinutes;
-                int stunden = gesamtMinuten / 60;
-                int minuten = gesamtMinuten % 60;
-                return $"{stunden}:{minuten:D2} h";
+                var gesamtStunden = (int)ts.TotalHours;
+                return $"{gesamtStunden:D2}:{ts.Minutes:D2}";
             }
             return string.Empty;
         }

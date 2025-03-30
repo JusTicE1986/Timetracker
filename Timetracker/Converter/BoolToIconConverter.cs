@@ -8,7 +8,7 @@ using System.Windows.Data;
 
 namespace Timetracker.Converter
 {
-    public class BooltToIconConverter : IValueConverter
+    public class BoolToIconConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {

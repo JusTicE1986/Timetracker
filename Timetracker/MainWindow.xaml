@@ -11,20 +11,20 @@
         Background="{DynamicResource AppBackgroundBrush}"
         Foreground="{DynamicResource TextBrush}">
     <Window.Resources>
-    <Style TargetType="Button">
-        <Setter Property="Padding" Value="10,6"/>
-        <Setter Property="Margin" Value="0 0 10 0"/>
-        <Setter Property="Background" Value="#0078d7"/>
-        <Setter Property="Foreground" Value="White"/>
-        <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
-        <!--<Setter Property="CornerRadius" Value="4"/>-->
-    </Style>
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Margin" Value="0 0 10 0"/>
+            <Setter Property="Background" Value="#0078d7"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <!--<Setter Property="CornerRadius" Value="4"/>-->
+        </Style>
     </Window.Resources>
     <Grid>
-    <views:MainView x:Name="MainViewControl"
+        <views:MainView x:Name="MainViewControl"
                     Margin="0 50 0 0"/>
-    <Button x:Name="ThemeToggleButton"
+        <Button x:Name="ThemeToggleButton"
         Content="🌙 Dark Mode"
         Width="120"
         Height="30"
