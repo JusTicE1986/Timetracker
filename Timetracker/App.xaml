@@ -5,13 +5,11 @@
              xmlns:fluent="urn:fluent-ribbon"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        <!--<ResourceDictionary>
+        <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Themes/Colors.xaml"/>
-                <ResourceDictionary Source="Themes/Converters.xaml"/>
-                <ResourceDictionary Source="Themes/Styles.xaml"/>
+                <ResourceDictionary Source="Themes/StyleKit.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>-->
+        </ResourceDictionary>
     </Application.Resources>
 
 </Application>

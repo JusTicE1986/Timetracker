@@ -53,7 +53,7 @@ namespace Timetracker.Views {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/Timetracker;component/views/ribboncontrol.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/Timetracker;V1.0.0.0;component/views/ribboncontrol.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\..\Views\RibbonControl.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

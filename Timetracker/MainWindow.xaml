@@ -1,133 +1,51 @@
 ﻿<Window x:Class="Timetracker.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Timetracker"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:views="clr-namespace:Timetracker.Views"
         mc:Ignorable="d"
-        Title="MainWindow" Width="1024" Height="768"
+        Title="TimeTracker" Width="1024" Height="768"
         MinWidth="1024" MinHeight="600"
-        Background="{DynamicResource AppBackgroundBrush}"
-        Foreground="{DynamicResource TextBrush}">
-    <Window.Resources>
-        <Style TargetType="Button">
-            <Setter Property="Padding" Value="10,6"/>
-            <Setter Property="Margin" Value="0 0 10 0"/>
-            <Setter Property="Background" Value="#0078d7"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <!--<Setter Property="CornerRadius" Value="4"/>-->
-        </Style>
-        <Style x:Key="PrimaryToggleButtonStyle" TargetType="ToggleButton">
-            <Setter Property="Padding" Value="10,6"/>
-            <Setter Property="Margin" Value="0 0 10 0"/>
-            <Setter Property="Background" Value="#0078d7"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <!--<Setter Property="CornerRadius" Value="4"/>-->
-        </Style>
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Padding" Value="10,6"/>
-            <Setter Property="Margin" Value="0 0 10 0"/>
-            <Setter Property="Background" Value="#28a745"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <!--<Setter Property="CornerRadius" Value="4"/>-->
-        </Style>
-    </Window.Resources>
+        Background="{StaticResource AppBackgroundBrush}"
+        FontFamily="Segoe UI Variable">
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <!-- Exportleiste -->
+            <RowDefinition Height="Auto"/>
+            <!-- Eingabe + Monatsinfo -->
             <RowDefinition Height="*"/>
-
+            <!-- Wochenübersicht -->
         </Grid.RowDefinitions>
-        <Border Background="White"
-        BorderBrush="#ddd"
-        BorderThickness="1"
-        CornerRadius="10"
-        Padding="20"
-        Margin="30"
-        Effect="{DynamicResource ShadowEffect}">
 
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="200"/>
-                    <ColumnDefinition Width="30"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+        <!-- Exportleiste -->
+        <views:ExportCard Grid.Row="0" Margin="30 30 30 10"/>
 
-                <!-- Button-Bereich -->
-                <StackPanel Grid.Column="0" VerticalAlignment="Top" >
-                    <TextBlock Text="📤 PDF Export"
-                       FontWeight="Bold"
-                       FontSize="18"
-                       Margin="0 0 0 10"/>
-                    <Button Content="📄 Woche"
-                    Command="{Binding ExportiereWocheCommand}"
-                    Height="40"
-                    Style="{StaticResource PrimaryButtonStyle}"/>
-                    <Button Content="📅 Monat"
-                    Command="{Binding ExportiereMonatCommand}"
-                    Height="40"
-                    Style="{StaticResource PrimaryButtonStyle}"/>
-                    
-                </StackPanel>
+        <!-- Eingabe + Monatsinfo -->
+        <Grid Grid.Row="1" Margin="30 0 30 20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="300"/>
+            </Grid.ColumnDefinitions>
 
-                <!-- Zeitraum-Bereich -->
-                <StackPanel Grid.Column="2" VerticalAlignment="Top">
-                    <TextBlock Text="Zeitraum auswählen"
-                       FontWeight="Bold"
-                       FontSize="18"
-                       Margin="0 0 0 10"/>
-                    <Grid Margin="0 10 0 0">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="200"/>
-                        </Grid.ColumnDefinitions>
+            <views:ZeitErfassungsControl Grid.Column="0" Margin="0 0 20 0"/>
+            <views:MonatsInfoControl Grid.Column="1"/>
+        </Grid>
 
-                        <TextBlock Text="Startdatum:"
-                           VerticalAlignment="Center"
-                           Grid.Row="0" Grid.Column="0"
-                           Margin="0 0 10 8"/>
-                        <DatePicker SelectedDate="{Binding Startdatum}"
-                            Grid.Row="0" Grid.Column="1"
-                            Margin="0 0 0 8"/>
+        <!-- Wochenübersicht -->
+        <views:WochenUebersichtControl Grid.Row="2" Margin="30 0 30 30"/>
 
-                        <TextBlock Text="Enddatum:"
-                           VerticalAlignment="Center"
-                           Grid.Row="1" Grid.Column="0"
-                           Margin="0 0 10 0"/>
-                        <DatePicker SelectedDate="{Binding Enddatum}"
-                            Grid.Row="1" Grid.Column="1"/>
-                        <Button Margin="0 5 0 0" Grid.Row="2" Content="🗓 Zeitraum exportieren"
-Command="{Binding ExportiereZeitraumCommand}"
-Height="40"
-Style="{StaticResource PrimaryButtonStyle}"/>
-                    </Grid>
-                </StackPanel>
-            </Grid>
-        </Border>
-
-
-
-        <views:MainView Grid.Row="1" x:Name="MainViewControl"
-                    Margin="0 50 0 0"/>
-        <Button  x:Name="ThemeToggleButton"
-        Content="🌙 Dark Mode"
-        Width="120"
-        Height="30"
-        HorizontalAlignment="Right"
-            VerticalAlignment="Top"
-        Margin="0,10,40,0"
-        Click="ThemeToggleButton_Click"/>
+        <!-- Dark Mode ToggleButton -->
+        <Button x:Name="ThemeToggleButton"
+                Content="🌙 Dark Mode"
+                Width="120"
+                Height="30"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="0,10,30,0"
+                Click="ThemeToggleButton_Click"
+                Panel.ZIndex="999"/>
     </Grid>
 </Window>

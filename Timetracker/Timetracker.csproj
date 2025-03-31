@@ -9,8 +9,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Converter\BoolToIconConverter.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="QuestPDF" Version="2025.1.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Include="Converter\BoolToIconConverter.cs" />
   </ItemGroup>
 
 </Project>
