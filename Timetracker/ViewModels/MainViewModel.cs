@@ -487,6 +487,7 @@ namespace Timetracker.ViewModels
 
         public MainViewModel()
         {
+
             var heute = DateTime.Today;
             aktuelleKalenderwoche = KulturHelper.GetKalenderwoche(heute);
             aktuellesJahr = heute.Year;
